@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------
+# .gitignore do projeto
+# Renomeie este arquivo para .gitignore (com o ponto na frente)
+# e coloque na raiz do projeto.
+# ---------------------------------------------------------------
+
+# Dados: ficam apenas na sua maquina, nunca no GitHub.
+# O codigo do projeto reconstroi estes arquivos.
+dados/bronze/*
+dados/prata/*
+dados/ouro/*
+
+# Excecao: mantem as pastas visiveis no GitHub, mesmo vazias.
+!dados/**/.gitkeep
+
+# Arquivos gerados pelo Python
+__pycache__/
+*.pyc
+
+# Ambiente virtual
+.venv/
+venv/
+
+# Configuracoes do editor
+.vscode/
+.idea/
+
+# Credenciais: nunca versione senhas ou chaves de acesso
+.env
+kaggle.json
