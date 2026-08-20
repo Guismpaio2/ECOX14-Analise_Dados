@@ -28,3 +28,5 @@ venv/
 # Credenciais: nunca versione senhas ou chaves de acesso
 .env
 kaggle.json
+
+dados/bronze/gpu/Kaggle_cache/**
