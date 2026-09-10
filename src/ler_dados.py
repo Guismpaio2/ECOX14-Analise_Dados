@@ -2,9 +2,12 @@ from pathlib import Path
 
 import pandas as pd
 
-base_dir = Path(__file__).resolve().parent
-path = base_dir.parent / "dados" / "bronze" / "gpu" / "gpu_database.csv"
+BRONZE = Path("dados/bronze/gpu")
+PADRAO = "gpuDATA_*.csv"
 
-df = pd.read_csv(path)
+arquivos = sorted(BRONZE.glob(PADRAO))
+if not arquivos:
+    raise FileNotFoundError(f"nenhum arquivo {PADRAO} em {BRONZE}")
 
-print(df.shape)
+df = pd.read_csv(arquivos[-1])
+print(arquivos[-1].name, df.shape)
