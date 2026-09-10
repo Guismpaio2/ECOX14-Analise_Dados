@@ -30,3 +30,7 @@ venv/
 kaggle.json
 
 dados/bronze/gpu/Kaggle_cache/**
+dados/bronze/llm/Kaggle_cache/**
+
+# Relatorios de profiling: gerados pelo codigo, nao versionar
+relatorios/
