@@ -27,6 +27,31 @@ python src/explorar.py
 # Os relatórios HTML são salvos em relatorios/ (não versionados)
 ```
 
+## Como reproduzir a camada Prata
+
+```bash
+python src/transformar_gpu.py
+python src/transformar_llm.py
+# Gera dados/prata/gpu.parquet, dados/prata/llm.parquet e dados/prata/proveniencia.jsonl
+```
+
+## Decisões de tratamento
+
+### GPU (Kaggle)
+- Espaços removidos de nomes de coluna e de texto.
+- `launch_date` convertida para `date` — timestamp nanosegundo descartado (só a data importa).
+- Colunas numéricas (`transistors_million`, `die_size_mm2`, `core_clock_mhz`, `memory_clock_mhz`, `processing_power_gflops`, `tdp_watts`) convertidas com `errors="coerce"` — valores inválidos viram NaN.
+- Chave composta `model` + `bus_interface`: duplicatas idênticas removidas. Motivo: o mesmo modelo com interfaces diferentes (PCI, AGP) são registros legítimos separados.
+- `tdp_watts` e `processing_power_gflops` marcados por IQR e z-score — valores extremos sinalizados, não removidos (GPUs antigas vs. modernas têm diferença natural de escala).
+
+### LLM (Kaggle)
+- Espaços removidos de nomes de coluna (corrige `Tokens `) e de texto.
+- `Comapany` renomeada para `Company` — erro de digitação da fonte original.
+- Valores `TBA` substituídos por `NaN`. Motivo: eram ausentes mascarados como texto, impedindo análises numéricas.
+- `Parameters`, `Tokens`, `Ratio`, `ALScore` convertidas para numérico com `errors="coerce"`.
+- Chave `Model`: duplicatas removidas.
+- `Parameters` e `ALScore` marcados por IQR e z-score.
+
 ## Defeitos conhecidos das fontes
 
 ### GPU (Kaggle)

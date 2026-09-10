@@ -13,6 +13,9 @@ dados/ouro/*
 # Excecao: mantem as pastas visiveis no GitHub, mesmo vazias.
 !dados/**/.gitkeep
 
+# Excecao: proveniencia e historico — nao se reconstroem igual, precisam subir.
+!dados/prata/proveniencia.jsonl
+
 # Arquivos gerados pelo Python
 __pycache__/
 *.pyc
