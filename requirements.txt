@@ -1,0 +1,9 @@
+fg-data-profiling
+setuptools<82
+
+#EXTRAÇÃO DE DADOS
+kagglehub
+requests
+
+
+pyarrow
