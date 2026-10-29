@@ -37,3 +37,7 @@ dados/bronze/llm/Kaggle_cache/**
 
 # Relatorios de profiling: gerados pelo codigo, nao versionar
 relatorios/
+
+
+# Arquivos de log: gerados pelo codigo, nao versionar
+*.log

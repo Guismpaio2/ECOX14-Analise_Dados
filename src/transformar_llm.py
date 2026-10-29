@@ -1,16 +1,19 @@
 from datetime import datetime
-from pathlib import Path
+import logging
 
 import pandas as pd
 
+import config
 import limpeza
 
-BRONZE = Path("dados/bronze/llm")
-PRATA = Path("dados/prata")
-PADRAO = "llmDATA_*.csv"
+BRONZE = config.FONTES["llm"]["bronze_dir"]
+PRATA = config.PRATA
+PADRAO = config.FONTES["llm"]["padrao"]
 
 MESES = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
          "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
+
+log = logging.getLogger(__name__)
 
 
 def carregar():
@@ -23,9 +26,9 @@ def carregar():
         df = pd.read_csv(caminho, encoding="utf-8")
     except UnicodeDecodeError:
         df = pd.read_csv(caminho, encoding="latin-1")
-    print("lido:", caminho.name, df.shape)
-    print(df.columns.tolist())
-    print(df.isna().sum())
+    log.info("lido: %s %s", caminho.name, df.shape)
+    log.debug("colunas: %s", df.columns.tolist())
+    log.debug("ausentes: %s", df.isna().sum().to_dict())
     return df, caminho
 
 
@@ -47,7 +50,7 @@ def converter_ratio(df):
     """
     df["Ratio"] = pd.to_numeric(
         df["Ratio"].astype("string").str.extract(r"^(\d+):")[0], errors="coerce")
-    print("Ratio recuperada:", df["Ratio"].notna().sum(), "de", len(df))
+    log.info("Ratio recuperada: %s de %s", df["Ratio"].notna().sum(), len(df))
     return df
 
 
@@ -67,8 +70,8 @@ def converter_data_lancamento(df):
     partes = df["Release Date"].astype("string").str.extract(r"^(\d{2})-([A-Za-z]{3})$")
     df["ano_lancamento"] = (2000 + pd.to_numeric(partes[0])).astype("Int64")
     df["mes_lancamento"] = partes[1].map(MESES).astype("Int64")
-    print("ano_lancamento ausente:", df["ano_lancamento"].isna().sum())
-    print(df["ano_lancamento"].value_counts().sort_index().to_dict())
+    log.info("ano_lancamento ausente: %s", df["ano_lancamento"].isna().sum())
+    log.debug("ano_lancamento distribuicao: %s", df["ano_lancamento"].value_counts().sort_index().to_dict())
     return df
 
 
@@ -76,7 +79,7 @@ def salvar(df):
     PRATA.mkdir(parents=True, exist_ok=True)
     destino = PRATA / "llm.parquet"
     df.to_parquet(destino, index=False)
-    print("salvo em:", destino, df.shape)
+    log.info("salvo em: %s %s", destino, df.shape)
     return destino
 
 
@@ -119,4 +122,6 @@ def main():
 
 
 if __name__ == "__main__":
+    config.configurar_log()
+    config.criar_pastas()
     main()
