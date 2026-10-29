@@ -1,6 +1,7 @@
 """Configuracao central do pipeline de dados."""
 
 import logging
+from datetime import datetime
 from pathlib import Path
 
 
@@ -11,6 +12,7 @@ BRONZE = DADOS / "bronze"
 PRATA = DADOS / "prata"
 OURO = DADOS / "ouro"
 RELATORIOS = RAIZ / "relatorios"
+LOGS = RAIZ / "logs"
 
 BRONZE_GPU = BRONZE / "gpu"
 BRONZE_LLM = BRONZE / "llm"
@@ -35,16 +37,20 @@ FONTES = {
     },
 }
 
-ARQUIVO_LOG = RAIZ / "pipeline.log"
+ARQUIVO_LOG = LOGS / f"pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+ARQUIVO_LOG_LATEST = LOGS / "pipeline_latest.log"
 
 
 def configurar_log(nivel=logging.INFO):
+    LOGS.mkdir(parents=True, exist_ok=True)
+
     logging.basicConfig(
         level=nivel,
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
         datefmt="%H:%M:%S",
         handlers=[
             logging.FileHandler(ARQUIVO_LOG, encoding="utf-8"),
+            logging.FileHandler(ARQUIVO_LOG_LATEST, encoding="utf-8", mode="w"),
             logging.StreamHandler(),
         ],
         force=True,
@@ -60,5 +66,6 @@ def criar_pastas():
         PRATA,
         OURO,
         RELATORIOS,
+        LOGS,
     ):
         pasta.mkdir(parents=True, exist_ok=True)

@@ -41,3 +41,4 @@ relatorios/
 
 # Arquivos de log: gerados pelo codigo, nao versionar
 *.log
+logs/
