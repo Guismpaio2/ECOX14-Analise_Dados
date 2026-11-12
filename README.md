@@ -37,13 +37,29 @@ python src/transformar_llm.py
 
 ## Como reproduzir a camada Ouro
 
-```bash
-python src/carga.py
-# Abre dados/ouro/projeto.duckdb (banco DuckDB, sem servidor), carrega a Prata e constroi a Ouro
-# Para recomeçar do zero, apague o arquivo: ele se reconstrói a partir da Prata
+A carga (`src/carga.py`) abre o banco `dados/ouro/projeto.duckdb` (DuckDB, sem servidor) e carrega a Prata. A Ouro é construída pelo **dbt**, na etapa `modelagem`, a partir dos modelos em `ecox14/models/`.
+
+Uma vez por máquina, crie o profile do dbt em `~/.dbt/profiles.yml` (fica fora do repositório), com o caminho absoluto do banco:
+
+```yaml
+ecox14:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /caminho/absoluto/ECOX14-Analise_Dados/dados/ouro/projeto.duckdb
+      schema: ouro
 ```
 
-Ou tudo a partir da carga, pelo pipeline: `python src/pipeline.py carga`.
+Com o `.venv` ativado (para o `dbt` ficar no PATH):
+
+```bash
+python src/pipeline.py carga    # carrega a Prata e roda o dbt (dbt run) e a conferência da Ouro
+cd ecox14 && dbt debug          # opcional: confere o profile e a conexão
+cd ecox14 && dbt run            # opcional: só reconstrói a Ouro
+```
+
+Para recomeçar do zero, apague `dados/ouro/projeto.duckdb`: ele se reconstrói a partir da Prata.
 
 ## Decisões de tratamento
 
