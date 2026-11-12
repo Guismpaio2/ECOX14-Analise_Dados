@@ -69,6 +69,36 @@ Ano de lançamento inteiro. Serve de chave de junção entre as duas fontes, que
 `transistors_million / die_size_mm2`, em milhões de transistores por mm². Serve à pergunta norteadora: mostra quanto cada geração empacota por área, comparável entre eras (de 0,01 em 1995 a ~125 na RTX 4090). Ausente quando faltam transistores ou área, ou a área é zero.
 Descartado: `gflops_por_watt`, por causa da mudança de escala de `processing_power_gflops` descrita acima.
 
+## Modelagem da camada Ouro
+
+Pergunta norteadora: *Como as GPUs evoluem em comparação com o desenvolvimento das IAs?* As duas fontes só se encontram pelo **tempo**: o ano de lançamento.
+
+### Quais tabelas existem
+
+| Tabela | Tipo | O que guarda |
+|--------|------|--------------|
+| `ouro.dim_ano` | dimensão | um ano por linha, do primeiro ao último ano das duas fontes, sem buracos |
+| `ouro.fato_gpu` | fato | medidas de cada GPU |
+| `ouro.fato_llm` | fato | medidas de cada LLM |
+| `ouro.vw_ano_gpu_llm` | view | resposta à pergunta norteadora: uma linha por ano |
+
+### Grão de cada tabela
+
+- `dim_ano`: **uma linha é um ano.**
+- `fato_gpu`: **uma linha é uma GPU em uma interface de barramento.** Chave: `modelo` + `interface_barramento`. Na Prata não há repetição dessa chave (verificado: 0 duplicatas).
+- `fato_llm`: **uma linha é um modelo de LLM.** Chave: `modelo`. Na Prata não há repetição dessa chave (verificado: 0 duplicatas).
+
+### Como as tabelas se ligam
+
+`fato_gpu.ano` e `fato_llm.ano` apontam para `dim_ano.ano`.
+
+### Decisões de modelagem
+
+- **Ano ausente não é órfão.** 624 GPUs e 8 LLMs não têm ano de lançamento. Ficam na fato com `ano` nulo, em vez de descartadas (descartar tiraria quase um terço das GPUs). A conferência de órfãos ignora nulos.
+- **Sem `dim_empresa`.** A pergunta é sobre tempo. O fabricante (2 valores na GPU) e a empresa do LLM (122 valores) ficam como texto na fato.
+- **`processing_power_gflops` fica fora do Ouro.** A seção de defeitos acima registra que a escala muda entre eras; levá-la ao Ouro espalharia um dado não confiável para quem consome a camada.
+- **Texto descritivo do LLM (arquitetura, notas, playground) fica fora da fato.** Não é medida nem chave.
+
 ## Defeitos conhecidos das fontes
 
 ### GPU (Kaggle)
