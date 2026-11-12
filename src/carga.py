@@ -131,12 +131,54 @@ def construir_ouro(con):
     log.info("ouro construida: dim_ano, fato_gpu, fato_llm, vw_ano_gpu_llm")
 
 
+def um_valor(con, sql):
+    return con.execute(sql).fetchone()[0]
+
+
+def conferir(con):
+    """Confere o grao de cada tabela e se sobrou fato sem dimensao.
+
+    Cada consulta deve devolver zero. Se nao devolver, o pipeline para aqui.
+    """
+    verificacoes = {
+        "dim_ano repetida em ano": """
+            SELECT count(*) FROM (
+                SELECT ano FROM ouro.dim_ano GROUP BY ano HAVING count(*) > 1)
+        """,
+        "fato_gpu repetida em modelo + interface": """
+            SELECT count(*) FROM (
+                SELECT modelo, interface_barramento FROM ouro.fato_gpu
+                GROUP BY modelo, interface_barramento HAVING count(*) > 1)
+        """,
+        "fato_llm repetida em modelo": """
+            SELECT count(*) FROM (
+                SELECT modelo FROM ouro.fato_llm GROUP BY modelo HAVING count(*) > 1)
+        """,
+        "fato_gpu com ano sem dim_ano": """
+            SELECT count(*) FROM ouro.fato_gpu f
+            LEFT JOIN ouro.dim_ano d USING (ano)
+            WHERE f.ano IS NOT NULL AND d.ano IS NULL
+        """,
+        "fato_llm com ano sem dim_ano": """
+            SELECT count(*) FROM ouro.fato_llm f
+            LEFT JOIN ouro.dim_ano d USING (ano)
+            WHERE f.ano IS NOT NULL AND d.ano IS NULL
+        """,
+    }
+    for descricao, sql in verificacoes.items():
+        encontrados = um_valor(con, sql)
+        log.info("conferencia %s: %s", descricao, encontrados)
+        if encontrados:
+            raise ValueError(f"conferencia falhou: {descricao} ({encontrados})")
+
+
 def main():
     con = conectar()
     try:
         criar_esquemas(con)
         carregar_prata(con)
         construir_ouro(con)
+        conferir(con)
     finally:
         con.close()
 
