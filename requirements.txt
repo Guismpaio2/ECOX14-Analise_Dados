@@ -11,3 +11,7 @@ pyarrow
 
 #banco de dados
 duckdb
+
+#transformacao declarativa (dbt)
+dbt-core
+dbt-duckdb
