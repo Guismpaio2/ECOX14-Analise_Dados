@@ -30,11 +30,17 @@ def etapa_transformacao():
     transformar_llm.main()
 
 
+def etapa_carga():
+    import carga
+
+    carga.main()
+
+
 ETAPAS = [
     ("ingestao", etapa_ingestao),
     ("exploracao", etapa_exploracao),
     ("transformacao", etapa_transformacao),
-    ("carga", None),
+    ("carga", etapa_carga),
     ("modelagem", None),
 ]
 

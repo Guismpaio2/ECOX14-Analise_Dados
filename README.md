@@ -35,6 +35,16 @@ python src/transformar_llm.py
 # Gera dados/prata/gpu.parquet, dados/prata/llm.parquet e dados/prata/proveniencia.jsonl
 ```
 
+## Como reproduzir a camada Ouro
+
+```bash
+python src/carga.py
+# Abre dados/ouro/projeto.duckdb (banco DuckDB, sem servidor), carrega a Prata e constroi a Ouro
+# Para recomeçar do zero, apague o arquivo: ele se reconstrói a partir da Prata
+```
+
+Ou tudo a partir da carga, pelo pipeline: `python src/pipeline.py carga`.
+
 ## Decisões de tratamento
 
 Funções genéricas (sem nome de fonte) ficam em `src/limpeza.py`; as específicas ficam no script de cada fonte.
