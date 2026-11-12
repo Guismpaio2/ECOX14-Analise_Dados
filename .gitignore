@@ -42,3 +42,7 @@ relatorios/
 # Arquivos de log: gerados pelo codigo, nao versionar
 *.log
 logs/
+
+# Artefatos do dbt: gerados a cada execucao do dbt run
+ecox14/target/
+ecox14/dbt_packages/

@@ -1,0 +1,10 @@
+version: 2
+
+# Origens: tabelas que a carga Python ja colocou no banco (esquema prata).
+# O dbt nao as cria; ele so aponta para elas e registra a dependencia.
+sources:
+  - name: prata
+    schema: prata
+    tables:
+      - name: gpu
+      - name: llm
