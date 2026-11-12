@@ -1,6 +1,7 @@
 """Ponto de entrada para orquestrar o pipeline do projeto."""
 
 import logging
+import subprocess
 import sys
 import time
 
@@ -36,12 +37,20 @@ def etapa_carga():
     carga.main()
 
 
+def etapa_modelagem():
+    import carga
+
+    # check=True: se o dbt falhar, o pipeline para aqui e nao segue com a Ouro quebrada.
+    subprocess.run(["dbt", "run"], cwd=config.RAIZ / "ecox14", check=True)
+    carga.conferir_ouro()
+
+
 ETAPAS = [
     ("ingestao", etapa_ingestao),
     ("exploracao", etapa_exploracao),
     ("transformacao", etapa_transformacao),
     ("carga", etapa_carga),
-    ("modelagem", None),
+    ("modelagem", etapa_modelagem),
 ]
 
 

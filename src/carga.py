@@ -177,7 +177,19 @@ def main():
     try:
         criar_esquemas(con)
         carregar_prata(con)
-        construir_ouro(con)
+        # construir_ouro(con)  <- agora e o dbt, na etapa modelagem (ecox14/models)
+    finally:
+        con.close()
+
+
+def conferir_ouro():
+    """Roda depois do dbt: confere a Ouro que ele construiu.
+
+    Fica separada de main() porque, sem construir_ouro, as tabelas da Ouro
+    so existem depois do dbt run.
+    """
+    con = conectar()
+    try:
         conferir(con)
     finally:
         con.close()
