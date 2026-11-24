@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import re
 
 import pandas as pd
 
@@ -14,6 +15,9 @@ ANO_MINIMO = 1980
 ANO_MAXIMO = 2026
 ANO_ESCALA = 2015
 LIMITE_BILHOES = 100
+# Quanto o valor da fonte pode se afastar do teorico (shaders x 2 x clock) e ainda ser aceito.
+# Cobre clock de boost e diferencas de arredondamento. Acima disso a linha fica sem valor.
+LIMITE_FATOR_GFLOPS = 3.0
 
 log = logging.getLogger(__name__)
 
@@ -112,6 +116,52 @@ def calcular_densidade_transistores(df):
     return df
 
 
+def _shaders(core_config):
+    """Shaders (CUDA cores) a partir de core_config: '2× 128:64:16:16' -> 256, '2944:184:64:...' -> 2944."""
+    if not isinstance(core_config, str):
+        return float("nan")
+    m = re.match(r"^\s*(?:(\d+)\s*[×x]\s*)?(\d+)\s*:", core_config)
+    if not m:
+        return float("nan")
+    return (int(m.group(1)) if m.group(1) else 1) * int(m.group(2))
+
+
+def _distancia_fator(razao):
+    """Quantas vezes a razao esta longe de 1, sempre >= 1 (2 e 0,5 ficam ambos em 2)."""
+    return razao.where(razao >= 1, 1 / razao)
+
+
+def corrigir_unidade_gflops(df):
+    """Confere processing_power_gflops contra o valor teorico em GFLOPS.
+
+    A fonte mistura GFLOPS e TFLOPS (x1000) linha a linha, nao por epoca: o mesmo modelo
+    aparece com 12,995 e com 13.270. O teorico vem de shaders x 2 x clock do core (MHz),
+    que estao na propria fonte. A unidade (1 ou x1000) mais proxima do teorico vence.
+    Se nenhuma fica a menos de LIMITE_FATOR_GFLOPS, a linha fica sem valor corrigido.
+    Valores de FP64 (1/64 do teorico, Pascal) tambem caem em 'inconclusivo'.
+    """
+    shaders = df["core_config"].map(_shaders).astype("float")
+    teorico = (shaders * 2 * df["core_clock_mhz"].astype("float") / 1000).where(lambda s: s > 0)
+    valor = df["processing_power_gflops"].astype("float").where(lambda s: s > 0)
+    df["gflops_teorico"] = teorico
+
+    dist_gflops = _distancia_fator(valor / teorico)
+    dist_tflops = _distancia_fator(valor * 1000 / teorico)
+    usa_tflops = dist_tflops < dist_gflops
+    dist = dist_gflops.where(~usa_tflops, dist_tflops)
+    aceito = dist <= LIMITE_FATOR_GFLOPS
+
+    df["gflops_corrigido"] = valor.where(~usa_tflops, valor * 1000).where(aceito)
+    unidade = pd.Series("sem referencia", index=df.index, dtype="object")
+    unidade = unidade.mask(teorico.notna() & valor.notna(), "inconclusivo")
+    unidade = unidade.mask(aceito & ~usa_tflops, "GFLOPS")
+    unidade = unidade.mask(aceito & usa_tflops, "TFLOPS convertido")
+    df["unidade_gflops"] = unidade
+
+    log.info("unidade_gflops: %s", unidade.value_counts().to_dict())
+    return df
+
+
 def salvar(df):
     PRATA.mkdir(parents=True, exist_ok=True)
     destino = PRATA / "gpu.parquet"
@@ -145,7 +195,8 @@ def main():
     df = padronizar_interface(df)
     df = limpeza.conferir_chave(df, ["model", "bus_interface"])
     df = calcular_densidade_transistores(df)
-    for coluna in ["tdp_watts", "processing_power_gflops"]:
+    df = corrigir_unidade_gflops(df)
+    for coluna in ["tdp_watts", "gflops_corrigido"]:
         df = limpeza.marcar_extremos(df, coluna)
         df = limpeza.marcar_zscore(df, coluna)
     destino = salvar(df)
@@ -164,8 +215,8 @@ def main():
             "bus_interface_chave criada com chave_texto (x e × unificados); rotulo original mantido",
             "chave model+bus_interface: repeticoes removidas, fica a primeira ocorrencia",
             "atributo derivado densidade_transistores = transistors_million / die_size_mm2",
-            "gflops_por_watt descartado: processing_power_gflops muda de escala (GFLOPS para TFLOPS) a partir de ~2016",
-            "tdp_watts e processing_power_gflops marcados por IQR e z-score",
+            "processing_power_gflops misturava GFLOPS e TFLOPS (x1000) linha a linha: gflops_teorico = shaders x 2 x clock do core; gflops_corrigido fica com a unidade mais proxima do teorico (unidade_gflops registra a escolha); linhas longe de ambas (ex.: FP64 do Pascal) ou sem clock ficam sem valor",
+            "tdp_watts e gflops_corrigido marcados por IQR e z-score",
         ],
     )
 
