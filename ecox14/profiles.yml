@@ -1,0 +1,9 @@
+# Profile do dbt, versionado junto do projeto: nada fica em ~/.dbt.
+# O caminho e relativo a pasta ecox14/, de onde o pipeline roda o dbt (ver src/pipeline.py).
+ecox14:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../dados/ouro/projeto.duckdb
+      schema: ouro

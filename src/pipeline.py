@@ -4,6 +4,7 @@ import logging
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import config
 
@@ -37,12 +38,26 @@ def etapa_carga():
     carga.main()
 
 
-def etapa_modelagem():
-    import carga
+def executar_dbt(*args):
+    """Roda o dbt no projeto ecox14, com o profile versionado nele (ecox14/profiles.yml).
 
-    # check=True: se o dbt falhar, o pipeline para aqui e nao segue com a Ouro quebrada.
-    subprocess.run(["dbt", "run"], cwd=config.RAIZ / "ecox14", check=True)
-    carga.conferir_ouro()
+    Usa o dbt instalado junto do Python que roda o pipeline, entao nao depende de
+    o ambiente virtual estar ativado. check=True: se um modelo ou teste falhar, o
+    pipeline para aqui e nao segue com a Ouro quebrada.
+    """
+    binarios = [Path(sys.executable).parent / nome for nome in ("dbt", "dbt.exe")]
+    dbt = next((str(b) for b in binarios if b.exists()), "dbt")
+    subprocess.run(
+        [dbt, *args, "--profiles-dir", "."],
+        cwd=config.RAIZ / "ecox14",
+        check=True,
+    )
+
+
+def etapa_modelagem():
+    executar_dbt("run")
+    executar_dbt("test")
+    executar_dbt("docs", "generate")
 
 
 ETAPAS = [
