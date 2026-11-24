@@ -3,11 +3,10 @@ setuptools<82
 
 #EXTRAÇÃO DE DADOS
 kagglehub
-requests
 
-
+#PROCESSAMENTO
+pandas
 pyarrow
-
 
 #banco de dados
 duckdb
@@ -15,3 +14,7 @@ duckdb
 #transformacao declarativa (dbt)
 dbt-core
 dbt-duckdb
+
+#painel (consumidor da Ouro)
+streamlit
+altair
