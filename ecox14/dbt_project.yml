@@ -1,0 +1,22 @@
+# Projeto dbt da camada Ouro. O banco e o do config.py (dados/ouro/projeto.duckdb),
+# apontado pelo profile "ecox14" em ~/.dbt/profiles.yml (fora do repositorio).
+name: "ecox14"
+version: "1.0.0"
+config-version: 2
+
+profile: "ecox14"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  ecox14:
+    +materialized: table

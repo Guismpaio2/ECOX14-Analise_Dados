@@ -1,8 +1,12 @@
 """Funcoes de limpeza que servem a qualquer fonte."""
 
 import json
+import logging
 
 import pandas as pd
+
+
+log = logging.getLogger(__name__)
 
 
 def tirar_espacos(df):
@@ -37,23 +41,26 @@ def limites_iqr(serie):
 def marcar_extremos(df, coluna):
     baixo, alto = limites_iqr(df[coluna].dropna())
     df[coluna + "_extremo"] = (df[coluna] < baixo) | (df[coluna] > alto)
-    print(coluna, df[coluna + "_extremo"].sum())
+    log.info("%s extremos (IQR): %s", coluna, df[coluna + "_extremo"].sum())
     return df
 
 
 def marcar_zscore(df, coluna, limite=3):
     z = (df[coluna] - df[coluna].mean()) / df[coluna].std()
     df[coluna + "_z"] = z.abs() > limite
-    print(coluna, "z acima de", limite, ":", df[coluna + "_z"].sum())
+    log.info("%s z acima de %s: %s", coluna, limite, df[coluna + "_z"].sum())
     return df
 
 
 def conferir_chave(df, chave):
     """Mostra quem repetiu a chave antes de apagar. Fica a primeira ocorrencia."""
     repetidas = df.duplicated(subset=chave).sum()
-    print("chaves repetidas:", repetidas)
+    log.info("chaves repetidas: %s", repetidas)
     if repetidas:
-        print(df[df.duplicated(subset=chave, keep=False)])
+        log.debug(
+            "linhas repetidas: %s",
+            df[df.duplicated(subset=chave, keep=False)].to_dict(orient="records"),
+        )
     return df.drop_duplicates(subset=chave)
 
 

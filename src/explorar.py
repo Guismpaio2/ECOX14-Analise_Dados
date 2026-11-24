@@ -1,9 +1,13 @@
 from pathlib import Path
+import logging
 
 import pandas as pd
 from data_profiling import ProfileReport
 
-RELATORIOS = Path("relatorios")
+import config
+
+
+log = logging.getLogger(__name__)
 
 
 def mais_recente(bronze: str, padrao: str) -> Path:
@@ -26,22 +30,25 @@ def _ler_csv(caminho: Path) -> pd.DataFrame:
 def gerar(caminho: Path) -> Path:
     df = _ler_csv(caminho)
     perfil = ProfileReport(df, title=caminho.name)
-    RELATORIOS.mkdir(exist_ok=True)
-    saida = RELATORIOS / f"{caminho.stem}.html"
+    config.RELATORIOS.mkdir(exist_ok=True)
+    saida = config.RELATORIOS / f"{caminho.stem}.html"
     perfil.to_file(saida)
+    log.info("relatorio gerado: %s", saida)
     return saida
 
 
 def main():
     fontes = [
-        ("dados/bronze/gpu", "gpuDATA_*.csv"),
-        ("dados/bronze/llm", "llmDATA_*.csv"),
+        (config.FONTES["gpu"]["bronze_dir"], config.FONTES["gpu"]["padrao"]),
+        (config.FONTES["llm"]["bronze_dir"], config.FONTES["llm"]["padrao"]),
     ]
     for bronze, padrao in fontes:
-        caminho = mais_recente(bronze, padrao)
-        print("perfilando:", caminho.name)
-        print(gerar(caminho))
+        caminho = mais_recente(str(bronze), padrao)
+        log.info("perfilando: %s", caminho.name)
+        gerar(caminho)
 
 
 if __name__ == "__main__":
+    config.configurar_log()
+    config.criar_pastas()
     main()

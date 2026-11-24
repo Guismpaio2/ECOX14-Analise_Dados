@@ -37,3 +37,17 @@ dados/bronze/llm/Kaggle_cache/**
 
 # Relatorios de profiling: gerados pelo codigo, nao versionar
 relatorios/
+
+
+# Arquivos de log: gerados pelo codigo, nao versionar
+*.log
+logs/
+
+# Artefatos do dbt: gerados a cada execucao do dbt run
+ecox14/target/
+ecox14/dbt_packages/
+# Identificador local que o dbt cria na maquina: nao e do projeto
+ecox14/.user.yml
+
+# Metadados do macOS
+.DS_Store
