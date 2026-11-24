@@ -42,7 +42,7 @@ with esquerda:
             tooltip=["ano", "gflops_maximo_gpu", "gpus_com_gflops"],
         )
     )
-    st.altair_chart(grafico, use_container_width=True)
+    st.altair_chart(grafico, width=True)
     st.caption("So entram GPUs com unidade de GFLOPS confirmada pelo teorico (shaders x 2 x clock).")
 
 with direita:
@@ -57,7 +57,7 @@ with direita:
             tooltip=["ano", "parametros_maximo_llm", "llms_lancados"],
         )
     )
-    st.altair_chart(grafico, use_container_width=True)
+    st.altair_chart(grafico, width=True)
     st.caption("Parametros na escala da fonte: bilhoes. A serie cobre so 2018 a 2024.")
 
 st.subheader("Tabela anual")
@@ -72,16 +72,16 @@ tabela = serie.rename(columns={
     "parametros_mediana_llm": "Parametros mediana (bi)",
     "parametros_maximo_llm": "Parametros maximo (bi)",
 }).round(1)
-st.dataframe(tabela, hide_index=True, use_container_width=True)
+st.dataframe(tabela, hide_index=True, width=True)
 
 st.subheader(f"Em {ano}")
 gpus, llms = st.columns(2)
 with gpus:
     st.markdown("**GPUs mais fortes (GFLOPS)**")
-    st.dataframe(consultas.gpus_do_ano(ano, limite), hide_index=True, use_container_width=True)
+    st.dataframe(consultas.gpus_do_ano(ano, limite), hide_index=True, width=True)
 with llms:
     st.markdown("**LLMs com mais parametros (bilhoes)**")
-    st.dataframe(consultas.llms_do_ano(ano, limite), hide_index=True, use_container_width=True)
+    st.dataframe(consultas.llms_do_ano(ano, limite), hide_index=True, width=True)
 
 st.caption(
     "Fontes: GPU Specs Database (Nvidia e AMD, 1995-2026) e LLMs Data (2018-2024), ambas do Kaggle. "
