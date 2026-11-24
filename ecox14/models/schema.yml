@@ -1,0 +1,116 @@
+version: 2
+
+# Descricao e testes da camada Ouro. O dbt gera a documentacao (dbt docs generate)
+# a partir deste arquivo e dos comentarios de cada modelo.
+
+models:
+  - name: dim_ano
+    description: >
+      Calendario de anos, do primeiro ao ultimo ano de lancamento das duas fontes, sem buracos.
+      Grao: uma linha por ano. E a ponte de tempo entre fato_gpu, fato_llm e vw_ano_gpu_llm.
+    columns:
+      - name: ano
+        description: Ano de lancamento (inteiro).
+        data_tests:
+          - not_null
+          - unique
+      - name: decada
+        description: "Decada do ano (ex.: 2020 para 2020 a 2029)."
+        data_tests:
+          - not_null
+
+  - name: fato_gpu
+    description: >
+      Medidas de cada GPU (NVIDIA e AMD). Grao: uma linha por GPU em cada interface de barramento
+      (modelo + interface_barramento). Sem repeticao dessa chave.
+    columns:
+      - name: modelo
+        description: Nome do modelo da GPU, como na fonte.
+        data_tests:
+          - not_null
+      - name: interface_barramento
+        description: "Interface de barramento (ex.: PCIe 3.0 x16). Parte da chave. 'nao informada' quando a fonte nao traz."
+        data_tests:
+          - not_null
+      - name: fabricante
+        description: Fabricante (Nvidia ou AMD).
+      - name: ano
+        description: Ano de lancamento. Nulo quando a fonte nao informa a data. Nulo nao e orfao.
+        data_tests:
+          - relationships:
+              to: ref('dim_ano')
+              field: ano
+      - name: transistores_milhoes
+        description: Transistores, em milhoes (escala corrigida para os lancamentos a partir de 2015).
+      - name: area_die_mm2
+        description: Area do die em mm2. Nula onde a fonte copiava os transistores.
+      - name: densidade_transistores
+        description: Transistores por mm2 de die (milhoes de transistores por mm2). Atributo derivado.
+      - name: gflops_corrigido
+        description: >
+          Poder de processamento em GFLOPS, com a unidade confirmada pelo teorico (shaders x 2 x clock).
+          Nulo quando a unidade nao pode ser confirmada. Ver unidade_gflops.
+      - name: unidade_gflops
+        description: >
+          Como a unidade foi decidida: GFLOPS (ja estava certo), TFLOPS convertido (multiplicado por 1000),
+          inconclusivo (longe do teorico, ex.: FP64 do Pascal) ou sem referencia (sem clock ou sem shaders).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['GFLOPS', 'TFLOPS convertido', 'inconclusivo', 'sem referencia']
+      - name: tdp_watts
+        description: Potencia de projeto (TDP), em watts.
+
+  - name: fato_llm
+    description: >
+      Medidas de cada modelo de LLM. Grao: uma linha por modelo. Chave modelo sem repeticao.
+    columns:
+      - name: modelo
+        description: Nome do modelo de linguagem.
+        data_tests:
+          - not_null
+          - unique
+      - name: empresa
+        description: Empresa ou laboratorio responsavel pelo modelo.
+      - name: ano
+        description: Ano de lancamento. Nulo quando a fonte grava TBA. Nulo nao e orfao.
+        data_tests:
+          - relationships:
+              to: ref('dim_ano')
+              field: ano
+      - name: mes
+        description: Mes de lancamento (1 a 12), quando a fonte informa.
+      - name: parametros
+        description: Numero de parametros, em bilhoes (escala consistente em toda a fonte).
+      - name: tokens
+        description: Quantidade de tokens de treino, na unidade da fonte.
+      - name: alscore
+        description: Pontuacao AL Score, na escala da fonte.
+
+  - name: vw_ano_gpu_llm
+    description: >
+      Resposta a pergunta norteadora: como as GPUs evoluem em comparacao com o lancamento de LLMs.
+      Grao: uma linha por ano. Cada fato e agregado antes do join para nao multiplicar linhas.
+      Nos anos sem dado de um dos lados, o valor e nulo ou zero, nunca inventado.
+    columns:
+      - name: ano
+        description: Ano (chave do grao).
+        data_tests:
+          - not_null
+          - unique
+      - name: gpus_lancadas
+        description: Quantas GPUs (linhas de fato_gpu) tem aquele ano de lancamento.
+      - name: gpus_com_gflops
+        description: Quantas dessas GPUs tem GFLOPS com unidade confirmada. Mostra a cobertura da metrica.
+      - name: gflops_mediana_gpu
+        description: Mediana do poder de processamento (GFLOPS) das GPUs com unidade confirmada.
+      - name: gflops_maximo_gpu
+        description: Maior poder de processamento (GFLOPS) entre as GPUs do ano.
+      - name: densidade_mediana_gpu
+        description: Mediana da densidade de transistores (milhoes por mm2).
+      - name: llms_lancados
+        description: Quantos modelos de LLM foram lancados no ano.
+      - name: parametros_mediana_llm
+        description: Mediana do numero de parametros (bilhoes) dos LLMs do ano.
+      - name: parametros_maximo_llm
+        description: Maior numero de parametros (bilhoes) entre os LLMs do ano.
