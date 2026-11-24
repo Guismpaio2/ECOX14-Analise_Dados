@@ -130,14 +130,25 @@ Feche o painel e o pipeline antes: o DuckDB trava o arquivo enquanto uma escrita
 
 ## Painel
 
+Depois de rodar o pipeline, o painel abre no navegador:
+
 ```bash
-streamlit run dashboard/painel.py      # a partir da raiz, com o pipeline já executado
+streamlit run dashboard/painel.py      # a partir da raiz do projeto
 ```
 
-O painel tem três partes: um recorte de anos, uma tabela anual e as GPUs e LLMs mais fortes de um ano escolhido. Separação do código:
+Ele abre em `http://localhost:8501`. Ctrl+C no terminal encerra o painel. Sem o pipeline, não há banco para ler.
+
+O painel tem quatro abas e filtros na barra lateral (período, fabricante de GPU, escala logarítmica, ano para detalhar):
+
+- **Evolução**: desempenho das GPUs, tamanho dos LLMs, quantidade lançada por ano, transistores e consumo.
+- **Onde faltam dados**: mapa de cobertura por ano e por indicador, motivos das GPUs sem GFLOPS confirmado e empresas com mais LLMs.
+- **Ano a ano**: GPUs e LLMs de um ano escolhido. Quando não há dado, a tela diz isso em vez de mostrar uma tabela vazia.
+- **Tabelas e download**: séries por ano, em CSV.
+
+Separação do código:
 
 - `dashboard/consultas.py`: todo o SQL de leitura. Os valores da tela entram como parâmetros (`?`), nunca concatenados.
-- `dashboard/painel.py`: só a tela. Não tem SQL.
+- `dashboard/painel.py`: só a tela.
 
 O banco é aberto com `read_only=True`: se alguém escrever uma consulta que altera dados, o DuckDB recusa.
 
